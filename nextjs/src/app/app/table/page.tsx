@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import {
     createSPASassClientAuthenticated as createSPASassClient
@@ -147,7 +149,26 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
 }
 
 export default function TaskManagementPage() {
-    const { user } = useGlobal();
+    const { user, loading: globalLoading } = useGlobal();
+    const router = useRouter();
+    const [adminMode, setAdminMode] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setAdminMode(localStorage.getItem('admin_mode') === 'true');
+        }
+    }, []);
+
+    const isEmailAdmin = user?.email?.toLowerCase().includes('admin') || user?.email?.toLowerCase() === 'mandar271205@gmail.com';
+    const isAdmin = isEmailAdmin || adminMode;
+
+    useEffect(() => {
+        if (!globalLoading && user && !isAdmin) {
+            toast.error("Access denied. You do not have permission to view this page.");
+            router.push('/app');
+        }
+    }, [user, globalLoading, isAdmin, router]);
+
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [initialLoading, setInitialLoading] = useState<boolean>(true);
@@ -156,10 +177,10 @@ export default function TaskManagementPage() {
     const [showConfetti, setShowConfetti] = useState<boolean>(false);
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.id && isAdmin) {
             loadTasks();
         }
-    }, [filter, user?.id]);
+    }, [filter, user?.id, isAdmin]);
 
     const loadTasks = async (): Promise<void> => {
         try {
@@ -208,7 +229,7 @@ export default function TaskManagementPage() {
         }
     };
 
-    if (initialLoading) {
+    if (initialLoading || globalLoading || !user || !isAdmin) {
         return (
             <div className="flex justify-center items-center min-h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />

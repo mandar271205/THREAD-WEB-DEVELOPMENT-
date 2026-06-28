@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useGlobal } from '@/lib/context/GlobalContext';
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +18,8 @@ import {
     UserCheck,
     TrendingUp,
     PieChart as PieIcon,
-    Search
+    Search,
+    Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
@@ -85,6 +88,26 @@ interface UserRecord {
 }
 
 export default function AdminDashboardPage() {
+    const { user, loading } = useGlobal();
+    const router = useRouter();
+    const [adminMode, setAdminMode] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setAdminMode(localStorage.getItem('admin_mode') === 'true');
+        }
+    }, []);
+
+    const isEmailAdmin = user?.email?.toLowerCase().includes('admin') || user?.email?.toLowerCase() === 'mandar271205@gmail.com';
+    const isAdmin = isEmailAdmin || adminMode;
+
+    useEffect(() => {
+        if (!loading && user && !isAdmin) {
+            toast.error("Access denied. You do not have permission to view this page.");
+            router.push('/app');
+        }
+    }, [user, loading, isAdmin, router]);
+
     // 2-3 Mock users as requested by the user
     const [users, setUsers] = useState<UserRecord[]>([
         {
@@ -144,6 +167,14 @@ export default function AdminDashboardPage() {
         setIsAlertOpen(false);
         setSelectedUser(null);
     };
+
+    if (loading || !user || !isAdmin) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+            </div>
+        );
+    }
 
     return (
         <PageWrapper>
