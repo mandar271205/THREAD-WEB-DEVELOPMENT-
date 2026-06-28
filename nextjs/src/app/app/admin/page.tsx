@@ -91,10 +91,12 @@ export default function AdminDashboardPage() {
     const { user, loading } = useGlobal();
     const router = useRouter();
     const [adminMode, setAdminMode] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setAdminMode(localStorage.getItem('admin_mode') === 'true');
+            setInitialized(true);
         }
     }, []);
 
@@ -102,11 +104,11 @@ export default function AdminDashboardPage() {
     const isAdmin = isEmailAdmin || adminMode;
 
     useEffect(() => {
-        if (!loading && user && !isAdmin) {
+        if (initialized && !loading && user && !isAdmin) {
             toast.error("Access denied. You do not have permission to view this page.");
             router.push('/app');
         }
-    }, [user, loading, isAdmin, router]);
+    }, [initialized, user, loading, isAdmin, router]);
 
     // 2-3 Mock users as requested by the user
     const [users, setUsers] = useState<UserRecord[]>([
@@ -168,7 +170,7 @@ export default function AdminDashboardPage() {
         setSelectedUser(null);
     };
 
-    if (loading || !user || !isAdmin) {
+    if (loading || !user || !initialized || !isAdmin) {
         return (
             <div className="flex justify-center items-center min-h-[50vh]">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />

@@ -152,10 +152,12 @@ export default function TaskManagementPage() {
     const { user, loading: globalLoading } = useGlobal();
     const router = useRouter();
     const [adminMode, setAdminMode] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setAdminMode(localStorage.getItem('admin_mode') === 'true');
+            setInitialized(true);
         }
     }, []);
 
@@ -163,11 +165,11 @@ export default function TaskManagementPage() {
     const isAdmin = isEmailAdmin || adminMode;
 
     useEffect(() => {
-        if (!globalLoading && user && !isAdmin) {
+        if (initialized && !globalLoading && user && !isAdmin) {
             toast.error("Access denied. You do not have permission to view this page.");
             router.push('/app');
         }
-    }, [user, globalLoading, isAdmin, router]);
+    }, [initialized, user, globalLoading, isAdmin, router]);
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
