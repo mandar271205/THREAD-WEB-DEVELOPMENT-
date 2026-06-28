@@ -17,8 +17,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, Loader2, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { CheckCircle, Loader2, Plus, Trash2, AlertCircle, AlertTriangle } from 'lucide-react';
 import Confetti from '@/components/Confetti';
+import { PageWrapper } from "@/components/layout/PageWrapper";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { Database } from '@/lib/types';
 
@@ -72,56 +75,69 @@ function CreateTaskDialog({ onTaskCreated }: CreateTaskDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-primary-600 text-white hover:bg-primary-700">
+                <Button className="bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Task
+                    New Task
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-[#111827] border-[#374151] text-white sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Create New Task</DialogTitle>
+                    <DialogTitle className="text-xl">Create New Task</DialogTitle>
                 </DialogHeader>
                 {error && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 )}
                 <form onSubmit={handleAddTask} className="space-y-4">
                     <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#9CA3AF]">Task Title</label>
                         <Input
                             type="text"
                             value={newTaskTitle}
                             onChange={(e) => setNewTaskTitle(e.target.value)}
-                            placeholder="Task title"
+                            placeholder="e.g. Calibrate thread counter"
                             required
+                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-[#6B7280]"
                         />
                     </div>
                     <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#9CA3AF]">Description</label>
                         <Textarea
                             value={newTaskDescription}
                             onChange={(e) => setNewTaskDescription(e.target.value)}
-                            placeholder="Task description (optional)"
+                            placeholder="Optional details..."
                             rows={3}
+                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-[#6B7280] resize-none"
                         />
                     </div>
-                    <div className="flex items-center justify-between">
-                        <label className="flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                checked={isUrgent}
-                                onChange={(e) => setIsUrgent(e.target.checked)}
-                                className="rounded border-gray-300 focus:ring-primary-500"
-                            />
-                            <span className="text-sm">Mark as urgent</span>
+                    <div className="flex items-center justify-between pt-2">
+                        <label className="flex items-center space-x-2 cursor-pointer group">
+                            <div className="relative flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={isUrgent}
+                                    onChange={(e) => setIsUrgent(e.target.checked)}
+                                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-[#374151] bg-[#0A0F1E] checked:border-indigo-500 checked:bg-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:ring-offset-1 focus:ring-offset-[#111827] transition-all"
+                                />
+                                <CheckCircle className="absolute left-0 top-0 h-4 w-4 pointer-events-none opacity-0 peer-checked:opacity-100 text-white p-0.5" />
+                            </div>
+                            <span className="text-sm text-[#9CA3AF] group-hover:text-white transition-colors">Mark as urgent</span>
                         </label>
                         <Button
                             type="submit"
-                            disabled={loading}
-                            className="bg-primary-600 text-white hover:bg-primary-700"
+                            disabled={loading || !newTaskTitle.trim()}
+                            className="bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                         >
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Task
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                "Create Task"
+                            )}
                         </Button>
                     </div>
                 </form>
@@ -169,7 +185,7 @@ export default function TaskManagementPage() {
             const supabase = await createSPASassClient();
             const { error: supabaseError } = await supabase.removeTask(id);
             if (supabaseError) throw supabaseError;
-            await loadTasks();
+            setTasks(prev => prev.filter(t => t.id !== id));
         } catch (err) {
             setError('Failed to remove task');
             console.error('Error removing task:', err);
@@ -183,8 +199,9 @@ export default function TaskManagementPage() {
             if (supabaseError) throw supabaseError;
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 2000);
-
-            await loadTasks();
+            
+            // Optimistic update
+            setTasks(prev => prev.map(t => t.id === id ? { ...t, done: true, done_at: new Date().toISOString() } : t));
         } catch (err) {
             setError('Failed to update task');
             console.error('Error updating task:', err);
@@ -193,125 +210,171 @@ export default function TaskManagementPage() {
 
     if (initialLoading) {
         return (
-            <div className="flex justify-center items-center min-h-[200px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 p-6">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+        <PageWrapper className="pb-20 lg:pb-0">
+            <div className="space-y-6 max-w-5xl mx-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <CardTitle>Task Management</CardTitle>
-                        <CardDescription>Manage your tasks and to-dos</CardDescription>
+                        <h1 className="text-2xl lg:text-3xl font-bold text-white">Admin Tasks</h1>
+                        <p className="text-[#9CA3AF] mt-1 text-sm">
+                            Manage laboratory tasks, calibration schedules, and team to-dos.
+                        </p>
                     </div>
                     <CreateTaskDialog onTaskCreated={loadTasks} />
-                </CardHeader>
-                <CardContent>
-                    {error && (
-                        <Alert variant="destructive" className="mb-6">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
+                </div>
 
-                    <div className="mb-6 flex gap-2">
-                        <Button
-                            variant={filter === null ? "default" : "secondary"}
-                            onClick={() => setFilter(null)}
-                            size="sm"
-                            className={filter === null ? "bg-primary-600 text-white hover:bg-primary-700" : ""}
-                        >
-                            All Tasks
-                        </Button>
-                        <Button
-                            variant={filter === false ? "default" : "secondary"}
-                            onClick={() => setFilter(false)}
-                            size="sm"
-                            className={filter === false ? "bg-primary-600 text-white hover:bg-primary-700" : ""}
-                        >
-                            Active
-                        </Button>
-                        <Button
-                            variant={filter === true ? "default" : "secondary"}
-                            onClick={() => setFilter(true)}
-                            size="sm"
-                            className={filter === true ? "bg-primary-600 text-white hover:bg-primary-700" : ""}
-                        >
-                            Completed
-                        </Button>
-                    </div>
-
-                    <div className="space-y-3 relative">
-                        {loading && (
-                            <div className="absolute inset-0 bg-background/50 flex items-center justify-center backdrop-blur-sm">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                            </div>
+                <div className="bg-[#111827] border border-[#374151] rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-6">
+                        {error && (
+                            <Alert variant="destructive" className="mb-6 bg-red-500/10 border-red-500/30 text-red-400">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
                         )}
 
-                        {tasks.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-muted-foreground">No tasks found</p>
-                            </div>
-                        ) : (
-                            tasks.map((task) => (
-                                <div
-                                    key={task.id}
-                                    className={`p-4 border rounded-lg transition-colors ${
-                                        task.done ? 'bg-muted' : 'bg-card'
-                                    } ${
-                                        task.urgent && !task.done ? 'border-red-200' : 'border-border'
-                                    }`}
-                                >
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className={`font-medium ${task.done ? 'line-through text-muted-foreground' : ''}`}>
-                                                {task.title}
-                                            </h3>
-                                            {task.description && (
-                                                <p className="mt-1 text-sm text-muted-foreground">{task.description}</p>
+                        {/* Filters */}
+                        <div className="mb-6 flex flex-wrap gap-2">
+                            <Button
+                                variant={filter === null ? "default" : "outline"}
+                                onClick={() => setFilter(null)}
+                                size="sm"
+                                className={filter === null 
+                                    ? "bg-indigo-600 text-white hover:bg-indigo-500 border-indigo-600" 
+                                    : "border-[#374151] text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]"
+                                }
+                            >
+                                All Tasks
+                            </Button>
+                            <Button
+                                variant={filter === false ? "default" : "outline"}
+                                onClick={() => setFilter(false)}
+                                size="sm"
+                                className={filter === false 
+                                    ? "bg-indigo-600 text-white hover:bg-indigo-500 border-indigo-600" 
+                                    : "border-[#374151] text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]"
+                                }
+                            >
+                                Active
+                            </Button>
+                            <Button
+                                variant={filter === true ? "default" : "outline"}
+                                onClick={() => setFilter(true)}
+                                size="sm"
+                                className={filter === true 
+                                    ? "bg-indigo-600 text-white hover:bg-indigo-500 border-indigo-600" 
+                                    : "border-[#374151] text-[#9CA3AF] hover:text-white hover:bg-[#1F2937]"
+                                }
+                            >
+                                Completed
+                            </Button>
+                        </div>
+
+                        {/* Task List */}
+                        <div className="space-y-3 relative min-h-[200px]">
+                            {loading && (
+                                <div className="absolute inset-0 bg-[#111827]/50 flex items-center justify-center backdrop-blur-sm z-10 rounded-lg">
+                                    <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                                </div>
+                            )}
+
+                            {tasks.length === 0 && !loading ? (
+                                <div className="text-center py-12 border-2 border-dashed border-[#374151] rounded-xl bg-[#0A0F1E]">
+                                    <div className="w-12 h-12 rounded-full bg-[#1F2937] flex items-center justify-center mx-auto mb-4">
+                                        <CheckCircle className="h-6 w-6 text-[#6B7280]" />
+                                    </div>
+                                    <p className="text-white font-medium text-lg">No tasks found</p>
+                                    <p className="text-[#9CA3AF] text-sm mt-1">You're all caught up!</p>
+                                </div>
+                            ) : (
+                                <AnimatePresence>
+                                    {tasks.map((task, i) => (
+                                        <motion.div
+                                            key={task.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            transition={{ delay: Math.min(i * 0.05, 0.3) }}
+                                            className={cn(
+                                                "p-4 rounded-xl transition-all flex items-start justify-between gap-4 border",
+                                                task.done 
+                                                    ? "bg-[#0A0F1E]/50 border-[#1F2937] opacity-60" 
+                                                    : task.urgent 
+                                                        ? "bg-[#111827] border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.05)]" 
+                                                        : "bg-[#111827] border-[#374151] hover:border-indigo-500/30 card-lift"
                                             )}
-                                            <div className="mt-2 flex items-center gap-2">
-                                                <span className="text-xs text-muted-foreground">
-                                                    Created: {new Date(task.created_at).toLocaleDateString()}
-                                                </span>
-                                                {task.urgent && !task.done && (
-                                                    <span className="px-2 py-0.5 text-xs bg-red-50 text-red-600 rounded-full">
-                                                        Urgent
-                                                    </span>
+                                        >
+                                            <div className="flex-1 min-w-0 pt-0.5">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className={cn(
+                                                        "font-medium text-base truncate",
+                                                        task.done ? "line-through text-[#6B7280]" : "text-white"
+                                                    )}>
+                                                        {task.title}
+                                                    </h3>
+                                                    {task.urgent && !task.done && (
+                                                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20 rounded-full flex-shrink-0">
+                                                            Urgent
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                
+                                                {task.description && (
+                                                    <p className={cn(
+                                                        "text-sm mb-3",
+                                                        task.done ? "text-[#4B5563]" : "text-[#9CA3AF]"
+                                                    )}>
+                                                        {task.description}
+                                                    </p>
                                                 )}
+                                                
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <span className="text-xs text-[#6B7280] font-mono-data">
+                                                        {task.done && task.done_at ? (
+                                                            <>Completed: {new Date(task.done_at).toLocaleDateString()}</>
+                                                        ) : (
+                                                            <>Added: {new Date(task.created_at).toLocaleDateString()}</>
+                                                        )}
+                                                    </span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0">
-                                            {!task.done && (
+
+                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                {!task.done && (
+                                                    <Button
+                                                        onClick={() => handleMarkAsDone(task.id)}
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-[#9CA3AF] hover:text-green-400 hover:bg-green-500/10 h-9 w-9 rounded-lg"
+                                                        title="Mark as done"
+                                                    >
+                                                        <CheckCircle className="h-5 w-5" />
+                                                    </Button>
+                                                )}
                                                 <Button
-                                                    onClick={() => handleMarkAsDone(task.id)}
+                                                    onClick={() => handleRemoveTask(task.id)}
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                    className="text-[#6B7280] hover:text-red-400 hover:bg-red-500/10 h-9 w-9 rounded-lg"
+                                                    title="Delete task"
                                                 >
-                                                    <CheckCircle className="h-5 w-5" />
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
-                                            )}
-                                            <Button
-                                                onClick={() => handleRemoveTask(task.id)}
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            >
-                                                <Trash2 className="h-5 w-5" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            )}
+                        </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
             <Confetti active={showConfetti} />
-        </div>
+        </PageWrapper>
     );
 }

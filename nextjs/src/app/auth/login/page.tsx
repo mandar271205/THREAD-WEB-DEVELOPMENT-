@@ -2,14 +2,19 @@
 'use client';
 
 import { createSPASassClient } from '@/lib/supabase/client';
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from '@/components/SSOButtons';
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showMFAPrompt, setShowMFAPrompt] = useState(false);
@@ -58,78 +63,124 @@ export default function LoginPage() {
 
 
     return (
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-[#111827] py-8 px-4 sm:px-10 border border-[#374151] rounded-2xl shadow-xl card-lift">
             {error && (
-                <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
-                    {error}
-                </div>
+                <Alert variant="destructive" className="mb-6 bg-red-500/10 border-red-500/30 text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-[#9CA3AF]">
                         Email address
                     </label>
-                    <div className="mt-1">
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                        />
-                    </div>
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-[#4B5563]"
+                    />
                 </div>
 
-                <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                        Password
-                    </label>
-                    <div className="mt-1">
-                        <input
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="password" className="block text-sm font-medium text-[#9CA3AF]">
+                            Password
+                        </label>
+                        <Link href="/auth/forgot-password" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
+                            Forgot password?
+                        </Link>
+                    </div>
+                    
+                    <div className="relative">
+                        <Input
                             id="password"
                             name="password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             autoComplete="current-password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                            placeholder="••••••••"
+                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-[#4B5563] pr-10"
                         />
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                    <div className="text-sm">
-                        <Link href="/auth/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
-                            Forgot your password?
-                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-white transition-colors focus:outline-none"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                            ) : (
+                                <Eye className="h-4 w-4" />
+                            )}
+                        </button>
                     </div>
                 </div>
 
                 <div>
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 py-5"
                     >
-                        {loading ? 'Signing in...' : 'Sign in'}
-                    </button>
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Signing in...
+                            </>
+                        ) : (
+                            'Sign in'
+                        )}
+                    </Button>
                 </div>
             </form>
 
-            <SSOButtons onError={setError} />
+            <div className="mt-6">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-[#374151]" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="bg-[#111827] px-2 text-[#9CA3AF]">Or continue with</span>
+                    </div>
+                </div>
 
-            <div className="mt-6 text-center text-sm">
-                <span className="text-gray-600">Don&#39;t have an account?</span>
+                <div className="mt-6">
+                    {/* SSOButtons will probably also need styling eventually if they are light-themed, but we wrap them here */}
+                    <div className="sso-dark-wrapper">
+                        <SSOButtons onError={setError} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-8 text-center text-sm">
+                <span className="text-[#9CA3AF]">Don&#39;t have an account?</span>
                 {' '}
-                <Link href="/auth/register" className="font-medium text-primary-600 hover:text-primary-500">
+                <Link href="/auth/register" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
                     Sign up
                 </Link>
             </div>
+            
+            <style jsx global>{`
+                /* Target any potential light-mode hardcodes in SSOButtons */
+                .sso-dark-wrapper button {
+                    background-color: #0A0F1E !important;
+                    color: white !important;
+                    border-color: #374151 !important;
+                }
+                .sso-dark-wrapper button:hover {
+                    background-color: #1F2937 !important;
+                }
+            `}</style>
         </div>
     );
 }

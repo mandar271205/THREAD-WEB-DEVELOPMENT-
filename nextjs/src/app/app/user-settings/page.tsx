@@ -1,11 +1,15 @@
 "use client";
+
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useGlobal } from '@/lib/context/GlobalContext';
 import { createSPASassClientAuthenticated as createSPASassClient } from '@/lib/supabase/client';
-import { Key, User, CheckCircle } from 'lucide-react';
+import { Key, User, CheckCircle, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { MFASetup } from '@/components/MFASetup';
+import { PageWrapper } from "@/components/layout/PageWrapper";
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { motion } from "framer-motion";
 
 export default function UserSettingsPage() {
     const { user } = useGlobal();
@@ -14,8 +18,6 @@ export default function UserSettingsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
-
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,106 +56,174 @@ export default function UserSettingsPage() {
         }
     };
 
-
-
     return (
-        <div className="space-y-6 p-6">
-            <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">User Settings</h1>
-                <p className="text-muted-foreground">
-                    Manage your account settings and preferences
-                </p>
-            </div>
+        <PageWrapper className="pb-20 lg:pb-0">
+            <div className="space-y-6 max-w-4xl mx-auto">
+                <div className="space-y-1">
+                    <h1 className="text-2xl lg:text-3xl font-bold text-white">Settings</h1>
+                    <p className="text-[#9CA3AF] text-sm">
+                        Manage your account, security preferences, and active sessions.
+                    </p>
+                </div>
 
-            {error && (
-                <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
+                {error && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                        <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    </motion.div>
+                )}
 
-            {success && (
-                <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>{success}</AlertDescription>
-                </Alert>
-            )}
+                {success && (
+                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                        <Alert className="bg-green-500/10 border-green-500/30 text-green-400">
+                            <CheckCircle className="h-4 w-4" />
+                            <AlertDescription>{success}</AlertDescription>
+                        </Alert>
+                    </motion.div>
+                )}
 
-            <div className="grid gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                User Details
-                            </CardTitle>
-                            <CardDescription>Your account information</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-500">User ID</label>
-                                <p className="mt-1 text-sm">{user?.id}</p>
+                <div className="grid gap-6">
+                    {/* User Details */}
+                    <div className="bg-[#111827] border border-[#374151] rounded-2xl overflow-hidden card-lift">
+                        <div className="p-6 border-b border-[#1F2937] flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                                <User className="h-5 w-5 text-indigo-400" />
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Email</label>
-                                <p className="mt-1 text-sm">{user?.email}</p>
+                                <h2 className="text-lg font-semibold text-white">Account Details</h2>
+                                <p className="text-xs text-[#9CA3AF]">Your profile information</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div className="p-6 grid sm:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Email Address</label>
+                                <p className="mt-1.5 text-white font-medium">{user?.email}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-[#6B7280] uppercase tracking-wider">Account ID</label>
+                                <p className="mt-1.5 text-[#9CA3AF] font-mono-data text-sm break-all">{user?.id}</p>
+                            </div>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Key className="h-5 w-5" />
-                                Change Password
-                            </CardTitle>
-                            <CardDescription>Update your account password</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handlePasswordChange} className="space-y-4">
-                                <div>
-                                    <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">
-                                        New Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        id="new-password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 text-sm"
-                                        required
-                                    />
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {/* Change Password */}
+                        <div className="bg-[#111827] border border-[#374151] rounded-2xl overflow-hidden card-lift h-fit">
+                            <div className="p-6 border-b border-[#1F2937] flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                    <Key className="h-5 w-5 text-amber-400" />
                                 </div>
                                 <div>
-                                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
-                                        Confirm New Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        id="confirm-password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 text-sm"
-                                        required
+                                    <h2 className="text-lg font-semibold text-white">Security</h2>
+                                    <p className="text-xs text-[#9CA3AF]">Update your password</p>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <form onSubmit={handlePasswordChange} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-[#9CA3AF]">New Password</label>
+                                        <Input
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            required
+                                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                                        />
+                                    </div>
+                                    <div className="space-y-2 mb-6">
+                                        <label className="text-sm font-medium text-[#9CA3AF]">Confirm Password</label>
+                                        <Input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            required
+                                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="submit"
+                                        disabled={loading || !newPassword || !confirmPassword}
+                                        className="w-full bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-500/10 mt-2"
+                                    >
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Updating...
+                                            </>
+                                        ) : (
+                                            "Update Password"
+                                        )}
+                                    </Button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {/* MFA Setup Wrap */}
+                        <div className="bg-[#111827] border border-[#374151] rounded-2xl overflow-hidden card-lift h-fit relative">
+                            {/* We just wrap the existing MFA component in our card style container, assuming it handles its own internal layout, but we give it a title bar so it matches. */}
+                            <div className="p-6 border-b border-[#1F2937] flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                                    <ShieldCheck className="h-5 w-5 text-green-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">Two-Factor Auth</h2>
+                                    <p className="text-xs text-[#9CA3AF]">Secure your account with MFA</p>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                <div className="dark-mfa-wrapper">
+                                    <MFASetup
+                                        onStatusChange={() => {
+                                            setSuccess('Two-factor authentication settings updated successfully');
+                                        }}
                                     />
                                 </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                                >
-                                    {loading ? 'Updating...' : 'Update Password'}
-                                </button>
-                            </form>
-                        </CardContent>
-                    </Card>
-
-                    <MFASetup
-                        onStatusChange={() => {
-                            setSuccess('Two-factor authentication settings updated successfully');
-                        }}
-                    />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+            
+            <style jsx global>{`
+                /* Quick overrides for the MFASetup component to blend in */
+                .dark-mfa-wrapper .text-gray-900, 
+                .dark-mfa-wrapper .text-gray-700, 
+                .dark-mfa-wrapper .text-gray-500 {
+                    color: #D1D5DB !important;
+                }
+                .dark-mfa-wrapper .bg-white {
+                    background-color: transparent !important;
+                }
+                .dark-mfa-wrapper .border-gray-200 {
+                    border-color: #374151 !important;
+                }
+                .dark-mfa-wrapper input {
+                    background-color: #0A0F1E !important;
+                    border-color: #374151 !important;
+                    color: white !important;
+                }
+                .dark-mfa-wrapper button.bg-primary-600 {
+                    background-color: #10B981 !important;
+                }
+                .dark-mfa-wrapper button.bg-primary-600:hover {
+                    background-color: #059669 !important;
+                }
+                .dark-mfa-wrapper button.bg-white {
+                    background-color: #1F2937 !important;
+                    color: white !important;
+                    border-color: #374151 !important;
+                }
+                .dark-mfa-wrapper button.bg-white:hover {
+                    background-color: #374151 !important;
+                }
+                .dark-mfa-wrapper .bg-gray-100 {
+                    background-color: #1F2937 !important;
+                }
+            `}</style>
+        </PageWrapper>
     );
 }

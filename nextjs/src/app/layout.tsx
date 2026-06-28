@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from '@vercel/analytics/next';
-import CookieConsent from "@/components/Cookies";
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { Toaster } from "@/components/ui/sonner";
 
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_PRODUCTNAME,
-  description: "The best way to build your SaaS product.",
+  title: "ThreadCounty - AI-Powered Fabric Analysis",
+  description: "Upload a fabric image and receive instant AI-powered thread density analysis.",
 };
 
 export default function RootLayout({
@@ -15,21 +25,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let theme = process.env.NEXT_PUBLIC_THEME
-  if(!theme) {
-    theme = "theme-sass3"
-  }
   const gaID = process.env.NEXT_PUBLIC_GOOGLE_TAG;
   return (
-    <html lang="en">
-    <body className={theme}>
+    <html lang="en" suppressHydrationWarning>
+    <body className={`${inter.variable} ${jetbrainsMono.variable} dark antialiased`} suppressHydrationWarning>
       {children}
+      <Toaster position="top-right" />
       <Analytics />
-      <CookieConsent />
       { gaID && (
           <GoogleAnalytics gaId={gaID}/>
       )}
-
     </body>
     </html>
   );

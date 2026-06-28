@@ -1,15 +1,22 @@
+// src/app/auth/register/page.tsx
 'use client';
 
-import {createSPASassClient} from '@/lib/supabase/client';
+import { createSPASassClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SSOButtons from "@/components/SSOButtons";
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function RegisterPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -39,7 +46,7 @@ export default function RegisterPage() {
 
             router.push('/auth/verify-email');
         } catch (err: Error | unknown) {
-            if(err instanceof Error) {
+            if (err instanceof Error) {
                 setError(err.message);
             } else {
                 setError('An unknown error occurred');
@@ -50,69 +57,95 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-[#111827] py-8 px-4 sm:px-10 border border-[#374151] rounded-2xl shadow-xl card-lift">
             {error && (
-                <div className="mb-4 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
-                    {error}
-                </div>
+                <Alert variant="destructive" className="mb-6 bg-red-500/10 border-red-500/30 text-red-400">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-[#9CA3AF]">
                         Email address
                     </label>
-                    <div className="mt-1">
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                        />
-                    </div>
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-[#4B5563]"
+                    />
                 </div>
 
-                <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-[#9CA3AF]">
                         Password
                     </label>
-                    <div className="mt-1">
-                        <input
+                    <div className="relative">
+                        <Input
                             id="password"
                             name="password"
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             autoComplete="new-password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                            placeholder="••••••••"
+                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-[#4B5563] pr-10"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-white transition-colors focus:outline-none"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                            {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                            ) : (
+                                <Eye className="h-4 w-4" />
+                            )}
+                        </button>
                     </div>
                 </div>
 
-                <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <div className="space-y-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#9CA3AF]">
                         Confirm Password
                     </label>
-                    <div className="mt-1">
-                        <input
+                    <div className="relative">
+                        <Input
                             id="confirmPassword"
                             name="confirmPassword"
-                            type="password"
+                            type={showConfirmPassword ? "text" : "password"}
                             autoComplete="new-password"
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                            placeholder="••••••••"
+                            className="bg-[#0A0F1E] border-[#374151] text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder:text-[#4B5563] pr-10"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-white transition-colors focus:outline-none"
+                            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                            {showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                            ) : (
+                                <Eye className="h-4 w-4" />
+                            )}
+                        </button>
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="pt-2 pb-2">
                     <div className="flex items-start">
                         <div className="flex h-5 items-center">
                             <input
@@ -121,15 +154,15 @@ export default function RegisterPage() {
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                className="h-4 w-4 rounded border-[#374151] bg-[#0A0F1E] text-indigo-600 focus:ring-indigo-500 focus:ring-offset-[#111827] cursor-pointer"
                             />
                         </div>
                         <div className="ml-3 text-sm">
-                            <label htmlFor="terms" className="text-gray-600">
+                            <label htmlFor="terms" className="text-[#9CA3AF] cursor-pointer">
                                 I agree to the{' '}
                                 <Link
                                     href="/legal/terms"
-                                    className="font-medium text-primary-600 hover:text-primary-500"
+                                    className="font-medium text-indigo-400 hover:text-indigo-300"
                                     target="_blank"
                                 >
                                     Terms of Service
@@ -137,7 +170,7 @@ export default function RegisterPage() {
                                 and{' '}
                                 <Link
                                     href="/legal/privacy"
-                                    className="font-medium text-primary-600 hover:text-primary-500"
+                                    className="font-medium text-indigo-400 hover:text-indigo-300"
                                     target="_blank"
                                 >
                                     Privacy Policy
@@ -147,25 +180,59 @@ export default function RegisterPage() {
                     </div>
                 </div>
                 <div>
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="flex w-full justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 py-5"
                     >
-                        {loading ? 'Creating account...' : 'Create account'}
-                    </button>
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating account...
+                            </>
+                        ) : (
+                            'Create account'
+                        )}
+                    </Button>
                 </div>
             </form>
 
-            <SSOButtons onError={setError}/>
+            <div className="mt-6">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-[#374151]" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="bg-[#111827] px-2 text-[#9CA3AF]">Or continue with</span>
+                    </div>
+                </div>
 
-            <div className="mt-6 text-center text-sm">
-                <span className="text-gray-600">Already have an account?</span>
+                <div className="mt-6">
+                    <div className="sso-dark-wrapper">
+                        <SSOButtons onError={setError} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-8 text-center text-sm">
+                <span className="text-[#9CA3AF]">Already have an account?</span>
                 {' '}
-                <Link href="/auth/login" className="font-medium text-primary-600 hover:text-primary-500">
+                <Link href="/auth/login" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
                     Sign in
                 </Link>
             </div>
+
+            <style jsx global>{`
+                /* Target any potential light-mode hardcodes in SSOButtons */
+                .sso-dark-wrapper button {
+                    background-color: #0A0F1E !important;
+                    color: white !important;
+                    border-color: #374151 !important;
+                }
+                .sso-dark-wrapper button:hover {
+                    background-color: #1F2937 !important;
+                }
+            `}</style>
         </div>
     );
 }
