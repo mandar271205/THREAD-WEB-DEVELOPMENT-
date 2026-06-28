@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -8,19 +8,18 @@ import {
     Clock,
     User,
     Settings,
-    Menu,
-    X,
     LogOut,
     ChevronDown,
     Layers,
     Shield,
     Bell,
-    Table2,
+    CheckSquare,
+    ShieldAlert,
+    Menu,
 } from 'lucide-react';
 import { useGlobal } from "@/lib/context/GlobalContext";
 import { createSPASassClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,14 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/app' },
-    { icon: Upload, label: 'Analyse Fabric', href: '/app/analyze' },
-    { icon: Clock, label: 'History', href: '/app/history' },
-    { icon: Table2, label: 'Admin Panel', href: '/app/table' },
-    { icon: User, label: 'Settings', href: '/app/user-settings' },
-];
-
 function getInitials(email: string) {
     const parts = email.split('@')[0].split(/[._-]/);
     return parts.length > 1
@@ -45,10 +36,7 @@ function getInitials(email: string) {
         : parts[0].slice(0, 2).toUpperCase();
 }
 
-function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
-    const router = useRouter();
-    const { user } = useGlobal();
-
+function SidebarContent({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?: () => void; isAdmin: boolean }) {
     const handleLogout = async () => {
         try {
             const client = await createSPASassClient();
@@ -57,6 +45,17 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
             console.error('Error logging out:', error);
         }
     };
+
+    const navItems = [
+        { icon: LayoutDashboard, label: 'Dashboard', href: '/app' },
+        { icon: Upload, label: 'Analyse Fabric', href: '/app/analyze' },
+        { icon: Clock, label: 'History', href: '/app/history' },
+        ...(isAdmin ? [
+            { icon: ShieldAlert, label: 'Admin Dashboard', href: '/app/admin' },
+            { icon: CheckSquare, label: 'Admin Tasks', href: '/app/table' }
+        ] : []),
+        { icon: User, label: 'Settings', href: '/app/user-settings' },
+    ];
 
     return (
         <div className="flex flex-col h-full bg-[#0A0F1E]">
@@ -122,9 +121,33 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [adminMode, setAdminMode] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const { user } = useGlobal();
+
+    // Check admin privilege on mount / local storage
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const savedAdminMode = localStorage.getItem('admin_mode') === 'true';
+            setAdminMode(savedAdminMode);
+        }
+    }, []);
+
+    const isEmailAdmin = user?.email?.toLowerCase().includes('admin') || user?.email?.toLowerCase() === 'mandar271205@gmail.com';
+    const isAdmin = isEmailAdmin || adminMode;
+
+    const handleToggleAdminMode = () => {
+        const nextMode = !adminMode;
+        setAdminMode(nextMode);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('admin_mode', nextMode ? 'true' : 'false');
+        }
+        // Redirect to dashboard if switching off admin panel and currently on an admin page
+        if (!nextMode && (pathname.startsWith('/app/admin') || pathname.startsWith('/app/table'))) {
+            router.push('/app');
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -135,18 +158,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const mobileNavItems = [
+        { icon: LayoutDashboard, label: 'Dashboard', href: '/app' },
+        { icon: Upload, label: 'Analyse Fabric', href: '/app/analyze' },
+        { icon: Clock, label: 'History', href: '/app/history' },
+        ...(isAdmin ? [{ icon: ShieldAlert, label: 'Admin', href: '/app/admin' }] : []),
+        { icon: User, label: 'Settings', href: '/app/user-settings' },
+    ];
+
     return (
         <div className="min-h-screen bg-[#0A0F1E] flex">
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 z-30 border-r border-[#374151]">
-                <SidebarContent pathname={pathname} />
+                <SidebarContent pathname={pathname} isAdmin={isAdmin} />
             </aside>
 
             {/* Mobile Sidebar Sheet */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetContent side="left" className="p-0 w-64 border-r border-[#374151] bg-[#0A0F1E]">
                     <SheetTitle className="sr-only">Navigation</SheetTitle>
-                    <SidebarContent pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+                    <SidebarContent pathname={pathname} onNavigate={() => setMobileOpen(false)} isAdmin={isAdmin} />
                 </SheetContent>
             </Sheet>
 
@@ -197,9 +228,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                     <p className="text-xs text-[#6B7280]">Signed in as</p>
                                     <p className="text-sm font-medium truncate">{user?.email}</p>
                                 </div>
+                                
+                                {/* Admin Mode Toggle option */}
+                                <DropdownMenuItem
+                                    onClick={handleToggleAdminMode}
+                                    className="cursor-pointer text-[#9CA3AF] hover:text-white focus:text-white focus:bg-[#1F2937] mt-1 flex justify-between items-center"
+                                >
+                                    <span className="flex items-center">
+                                        <Shield className="w-4 h-4 mr-2" />
+                                        Admin Mode
+                                    </span>
+                                    <span className={cn(
+                                        "text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase",
+                                        isAdmin ? "bg-green-500/20 text-green-400" : "bg-[#374151] text-[#9CA3AF]"
+                                    )}>
+                                        {isAdmin ? "ON" : "OFF"}
+                                    </span>
+                                </DropdownMenuItem>
+
                                 <DropdownMenuItem
                                     onClick={() => router.push('/app/user-settings')}
-                                    className="cursor-pointer text-[#9CA3AF] hover:text-white focus:text-white focus:bg-[#1F2937] mt-1"
+                                    className="cursor-pointer text-[#9CA3AF] hover:text-white focus:text-white focus:bg-[#1F2937]"
                                 >
                                     <Settings className="w-4 h-4 mr-2" />
                                     Settings
@@ -224,7 +273,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
                 {/* Mobile bottom tab bar */}
                 <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-[#0A0F1E]/95 backdrop-blur-md border-t border-[#374151] flex items-center justify-around px-2 py-2">
-                    {navItems.slice(0, 4).map((item) => {
+                    {mobileNavItems.map((item) => {
                         const isActive = pathname === item.href || (item.href !== '/app' && pathname.startsWith(item.href));
                         return (
                             <Link
