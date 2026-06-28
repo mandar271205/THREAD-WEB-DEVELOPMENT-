@@ -37,6 +37,7 @@ function getInitials(email: string) {
 }
 
 function SidebarContent({ pathname, onNavigate, isAdmin }: { pathname: string; onNavigate?: () => void; isAdmin: boolean }) {
+    const { user } = useGlobal();
     const handleLogout = async () => {
         try {
             const client = await createSPASassClient();
