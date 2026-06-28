@@ -197,6 +197,37 @@ export default function RegisterPage() {
                 </div>
             </form>
 
+            {/* Quick Test Registration row */}
+            <div className="mt-4 flex flex-col gap-2 p-3 bg-[#0A0F1E]/50 border border-[#374151] rounded-xl">
+                <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider text-center">Quick Demo Registration</span>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setEmail('user@threadcounty.com');
+                            setPassword('Password123!');
+                            setConfirmPassword('Password123!');
+                            setAcceptedTerms(true);
+                        }}
+                        className="py-1.5 px-3 rounded-lg border border-[#374151] text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937] transition-all"
+                    >
+                        User Demo
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setEmail('admin@threadcounty.com');
+                            setPassword('Password123!');
+                            setConfirmPassword('Password123!');
+                            setAcceptedTerms(true);
+                        }}
+                        className="py-1.5 px-3 rounded-lg border border-[#374151] text-xs font-medium text-indigo-400 hover:text-indigo-300 hover:bg-[#1F2937] transition-all"
+                    >
+                        Admin Demo
+                    </button>
+                </div>
+            </div>
+
             <div className="mt-6">
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
