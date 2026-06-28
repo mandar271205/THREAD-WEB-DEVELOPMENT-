@@ -40,7 +40,8 @@ export default function LoginPage() {
             if (mfaData.nextLevel === 'aal2' && mfaData.nextLevel !== mfaData.currentLevel) {
                 setShowMFAPrompt(true);
             } else {
-                router.push('/app');
+                const isAdmin = email.toLowerCase().includes('admin') || email.toLowerCase() === 'mandar271205@gmail.com';
+                router.push(isAdmin ? '/app/admin' : '/app');
                 return;
             }
         } catch (err) {
@@ -143,6 +144,33 @@ export default function LoginPage() {
                     </Button>
                 </div>
             </form>
+
+            {/* Quick Test Accounts row */}
+            <div className="mt-4 flex flex-col gap-2 p-3 bg-[#0A0F1E]/50 border border-[#374151] rounded-xl">
+                <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-wider text-center">Quick Demo Accounts</span>
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setEmail('user@threadcounty.com');
+                            setPassword('Password123!');
+                        }}
+                        className="py-1.5 px-3 rounded-lg border border-[#374151] text-xs font-medium text-[#9CA3AF] hover:text-white hover:bg-[#1F2937] transition-all"
+                    >
+                        User Account
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setEmail('admin@threadcounty.com');
+                            setPassword('Password123!');
+                        }}
+                        className="py-1.5 px-3 rounded-lg border border-[#374151] text-xs font-medium text-indigo-400 hover:text-indigo-300 hover:bg-[#1F2937] transition-all"
+                    >
+                        Admin Account
+                    </button>
+                </div>
+            </div>
 
             <div className="mt-6">
                 <div className="relative">
