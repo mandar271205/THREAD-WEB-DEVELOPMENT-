@@ -53,6 +53,9 @@ export default function HistoryPage() {
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
+        if (!user?.id) return;
+        const userId = user.id;
+
         async function fetchHistory() {
             try {
                 const supabase = await createSPASassClientAuthenticated();
@@ -60,7 +63,7 @@ export default function HistoryPage() {
                 const { data, error } = await client
                     .from("reports")
                     .select("*, uploads(image_url, filename)")
-                    .eq("user_id", user?.id)
+                    .eq("user_id", userId)
                     .order("created_at", { ascending: false });
                 if (error) throw error;
                 setReports(data || []);
@@ -70,7 +73,7 @@ export default function HistoryPage() {
                 setLoading(false);
             }
         }
-        if (user?.id) fetchHistory();
+        fetchHistory();
     }, [user]);
 
     const handleDelete = async (reportId: string) => {

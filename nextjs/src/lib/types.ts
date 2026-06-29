@@ -39,6 +39,128 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          id: string
+          full_name: string | null
+          avatar_url: string | null
+          role: string | null
+          plan: string | null
+          storage_used_bytes: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id: string
+          full_name?: string | null
+          avatar_url?: string | null
+          role?: string | null
+          plan?: string | null
+          storage_used_bytes?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          role?: string | null
+          plan?: string | null
+          storage_used_bytes?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      uploads: {
+        Row: {
+          id: string
+          user_id: string
+          image_url: string
+          filename: string
+          status: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          image_url: string
+          filename: string
+          status?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          image_url?: string
+          filename?: string
+          status?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          id: string
+          upload_id: string
+          user_id: string
+          weave_type: string | null
+          warp_density: number | null
+          weft_density: number | null
+          confidence_score: number | null
+          quality_grade: string | null
+          notes: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          upload_id: string
+          user_id: string
+          weave_type?: string | null
+          warp_density?: number | null
+          weft_density?: number | null
+          confidence_score?: number | null
+          quality_grade?: string | null
+          notes?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          upload_id?: string
+          user_id?: string
+          weave_type?: string | null
+          warp_density?: number | null
+          weft_density?: number | null
+          confidence_score?: number | null
+          quality_grade?: string | null
+          notes?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todo_list: {
         Row: {
           created_at: string
