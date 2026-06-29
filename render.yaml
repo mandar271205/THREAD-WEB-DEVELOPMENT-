@@ -1,14 +1,14 @@
 services:
   - type: web
     name: threadcounty-api
-    runtime: python
+    runtime: docker
+    dockerfilePath: threadcounty-api/Dockerfile
+    dockerContext: .
     plan: free
     region: singapore
     branch: main
     autoDeploy: true
     healthCheckPath: /health
-    buildCommand: cd threadcounty-api && pip install -r requirements.txt
-    startCommand: cd threadcounty-api && uvicorn main:app --host 0.0.0.0 --port $PORT
     buildFilter:
       paths:
         - threadcounty-api/**
