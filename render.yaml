@@ -2,7 +2,7 @@ services:
   - type: web
     name: threadcounty-api
     runtime: python
-    plan: starter
+    plan: free
     region: singapore
     branch: main
     autoDeploy: true
