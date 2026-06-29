@@ -3,7 +3,7 @@ services:
     name: threadcounty-api
     runtime: docker
     dockerfilePath: threadcounty-api/Dockerfile
-    dockerContext: .
+    dockerContext: threadcounty-api
     plan: free
     region: singapore
     branch: main
