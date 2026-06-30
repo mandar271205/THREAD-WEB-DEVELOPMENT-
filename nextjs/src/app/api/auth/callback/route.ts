@@ -1,17 +1,22 @@
-// src/app/api/auth/callback/route.ts
 import { NextResponse } from 'next/server'
 import { createSSRSassClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
+    const next = requestUrl.searchParams.get('next') ?? '/app'
 
     if (code) {
         const supabase = await createSSRSassClient()
         const client = supabase.getSupabaseClient()
 
         // Exchange the code for a session
-        await supabase.exchangeCodeForSession(code)
+        const { error: exchangeError } = await supabase.exchangeCodeForSession(code)
+
+        if (exchangeError) {
+            console.error('Exchange code error:', exchangeError)
+            return NextResponse.redirect(new URL('/auth/login?error=Invalid_link', request.url))
+        }
 
         // Check MFA status
         const { data: aal, error: aalError } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
@@ -27,7 +32,7 @@ export async function GET(request: Request) {
         }
 
         // If MFA is not required or already verified, proceed to app
-        return NextResponse.redirect(new URL('/app', request.url))
+        return NextResponse.redirect(new URL(next, request.url))
     }
 
     // If no code provided, redirect to login
