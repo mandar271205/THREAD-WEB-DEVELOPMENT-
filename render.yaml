@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: threadcounty-api
+    runtime: docker
+    dockerfilePath: threadcounty-api/Dockerfile
+    dockerContext: threadcounty-api
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - threadcounty-api/**
+        - render.yaml
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://threadcounty-nu.vercel.app,https://threadcounty.vercel.app,http://localhost:3000
+      - key: ALLOWED_ORIGIN_REGEX
+        value: https://.*\.vercel\.app
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: NVIDIA_NIM_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
